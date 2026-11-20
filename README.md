@@ -1,29 +1,57 @@
-# Earnla — local earnings tracker
+# Earnla
 
-Use Node.js with built-in `node:sqlite` support.
+A local earnings tracker built with Next.js, React, TypeScript and SQLite. No account or external service is required.
+
+## Run locally
+
+Use Node.js 22.13 or newer (built-in `node:sqlite` is required).
 
 ```sh
-git clone https://github.com/alanecconceicao-fl/earnla.git
-cd earnla
-node server.mjs
+npm install
+npm run db:migrate
+npm run dev
 ```
 
-Run `node server.mjs` from this folder and open `http://127.0.0.1:4173`. The server uses Node's built-in `node:sqlite` module and stores projects, tasks, settings, weekly bonuses, and actual weekly payments in `earnings.sqlite` beside the server file. On the first run after this update, existing browser data is copied into SQLite. After that, the SQLite database is the app's primary store.
+Open [http://127.0.0.1:4173](http://127.0.0.1:4173).
 
-Use **Export** to download a JSON backup. Use **Import** to restore an Earnla JSON export; importing replaces the current SQLite data after confirmation. The SQLite database and its journal files are ignored by Git.
+For a production build:
 
-## Earnings calculation
+```sh
+npm run build
+npm start
+```
 
-- Each project sets a default hourly rate in USD for new tasks. Each task saves the rate it uses. To correct a specific task, edit its hourly rate in the task form.
-- The projected hourly amount is `hours billed × saved task hourly rate`. Bonus and others are added in USD.
-- On upgrade, existing tasks are assigned the project rates saved at the time of migration. Backups with saved task rates preserve them. Older backups use their own project rates.
-- Projects with separate worked-hour tracking enabled require a second worked-hours value per task. Worked hours are stored and displayed to two decimal places. The existing Code Behaviors project is enabled by default.
-- Tasks are grouped into weeks by their submission date. The week start day is configurable.
-- Each week has a separate weekly bonus. The weekly total is the sum of its task totals plus that weekly bonus.
-- Each week also has an actual-paid amount field for entering the amount received in EUR. All-time earned is the sum of those euro amounts.
-- All-time projected is task totals plus weekly bonuses in USD; it remains separate from actual earned amounts in EUR.
-- Monthly net is actual weekly EUR earnings minus configured taxes. Weekly earnings are assigned to the month of their payroll date: the Friday after the period-ending Sunday. Each tax applies independently to taxable gross for the month, up to its optional monthly roof; tax-free weeks are excluded from taxable gross.
-- The initial tax rules are IRS at 25% without a roof and SS at 21.4% with a €6,445.56 monthly roof. Tax rules can be edited, added, or removed.
-- JSON backups include weekly actual-paid amounts as well as weekly bonuses.
+## Database and privacy
 
-Existing v1 tasks and project rates are migrated in this browser. Existing project completion/rejection amounts are carried to each task as its `others` amount.
+- `npm run db:migrate` applies the numbered SQL files in `migrations/`. It creates the schema and migration history only: no projects, tasks, payments, bonuses, or tax presets are seeded. Running it again is safe.
+- The database defaults to `data/earnla.sqlite`. Missing migrations also run automatically when the API first opens the database.
+- To choose another location, set `EARNLA_DB_PATH` in the shell or in an untracked `.env.local`. The migration command reads `.env.local` too. Keep the file outside `public/`.
+- Database files, SQLite journals, environment files, backups, dependencies and build output are ignored by Git. The source contains no personal earnings records or project-specific defaults.
+- SQLite is the authoritative store. The app does not cache earnings in browser storage or automatically import old browser data. Obsolete browser copies are removed after a successful database load.
+- **Export** downloads a JSON backup. **Import** restores a selected JSON backup after confirmation and replaces the current database records. Exports from the previous app remain supported, including saved task rates.
+- Backups contain the data you entered; keep them private. Start from a fresh database to share a clean installation.
+- This is a local, single-user app. The supplied start commands bind to `127.0.0.1`.
+
+## Earnings rules
+
+- Each project sets a default hourly rate in USD. Each task saves its own rate, so changing a project rate affects new tasks while submitted tasks retain their saved rates.
+- A projected task total is `billed hours × saved hourly rate + task bonus + others`. Each week adds its separate weekly bonus. All-time projected includes every task and weekly bonus.
+- Billed and worked hours use two decimal places. Projects can enable separate worked-hour tracking.
+- Tasks are grouped by submission week; the start day is configurable.
+- Actual weekly payments are entered in EUR. All-time earned sums those payments, separately from USD projections.
+- Monthly earnings use the payroll Friday following the period end, including when payment falls in the next month.
+- Taxes apply independently to taxable gross EUR earnings. Each tax has a name, percentage and optional monthly earnings roof. Tax-free weeks contribute to gross and net earnings but are excluded from the taxable base.
+- The monthly screen starts at the first recorded working month and shows gross, taxes and net earned.
+
+## Project structure
+
+- `app/`: Next.js page, shared styling and `/api/state` route.
+- `components/`: dashboard, task form, tables and project/tax settings.
+- `lib/`: shared types, validation, calculations, SQLite access and migration runner.
+- `migrations/`: schema-only SQL migrations.
+- `tests/`: synthetic fixtures covering calculations, imports, rate history and database persistence.
+
+```sh
+npm run typecheck
+npm test
+```
