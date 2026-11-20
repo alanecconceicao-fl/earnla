@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f8f7fc" />
+  <title>Earnla — earnings tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#"><span class="brand-mark">e</span>Earnla</a>
+      <div class="nav-label">WORKSPACE</div>
+      <button class="nav-item active" data-view="overview">▦ <span>Overview</span></button>
+      <button class="nav-item" data-view="monthly">▤ <span>Monthly</span></button>
+      <button class="nav-item" data-view="tasks">◷ <span>Tasks</span><b id="task-count">0</b></button>
+      <button class="nav-item" data-view="projects">⚙ <span>Projects & settings</span></button>
+      <div class="sidebar-bottom"><span class="privacy-dot">●</span><div><strong>Private by default</strong><small>Saved in local SQLite</small></div></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong id="page-crumb">Overview</strong></div><div class="top-actions"><span class="local-badge">SQLITE</span><input type="file" id="import-file" accept="application/json,.json" hidden><button class="icon-button" id="import-btn" title="Import an Earnla JSON backup">Import</button><button class="icon-button" id="export-btn" title="Export backup">Export</button></div></header>
+
+      <section class="page" id="overview-view">
+        <div class="page-heading"><div><div class="eyebrow" id="today-label">YOUR EARNINGS</div><h1>Earnings overview</h1><p class="subhead">Track projected task earnings against what you actually receive.</p></div><button class="primary-button" id="add-task"><span>＋</span> Add task</button></div>
+        <div class="metric-grid">
+          <article class="metric-card earned-card"><div class="metric-label">ALL-TIME TOTAL EARNED (EUR)</div><div class="metric-value" id="all-time-earned">€0.00</div><div class="metric-foot">Actual amounts paid across all weeks</div></article>
+          <article class="metric-card projected-card"><div class="metric-label">ALL-TIME TOTAL PROJECTED (USD)</div><div class="metric-value" id="all-time-projected">$0.00</div><div class="metric-foot" id="lifetime-total-detail">Task totals + weekly bonuses</div></article>
+          <article class="metric-card month-card"><div class="metric-label" id="current-month-label">THIS MONTH NET (EUR)</div><div class="metric-value" id="current-month-total">€0.00</div><div class="metric-foot" id="current-month-detail">€0.00 taxes · €0.00 gross</div></article>
+          <article class="metric-card"><div class="metric-label">HOURS WORKED / BILLED</div><div class="metric-value" id="all-time-hours">0.00</div><div class="metric-foot">Worked hours where tracked; billed hours otherwise</div></article>
+        </div>
+        <div class="week-toolbar"><div class="week-control"><button class="week-arrow" id="prev-week" aria-label="Previous week">←</button><div><div class="week-title" id="week-title">This week</div><div class="week-range" id="week-range"></div></div><button class="week-arrow" id="next-week" aria-label="Next week">→</button></div><button class="text-button" id="this-week">Jump to this week</button></div>
+        <section class="panel week-summary">
+          <div class="week-total"><label class="weekly-paid-field featured-paid-field"><span class="eyebrow">ACTUAL AMOUNT EARNED (EUR)</span><input id="weekly-paid" type="number" min="0" step="0.01" placeholder="0.00"></label><div class="week-projection"><span class="eyebrow">SELECTED WEEK PROJECTED (USD)</span><strong id="week-total">$0.00</strong><small>Task earnings plus this week’s bonus</small></div><label class="weekly-bonus-field">Weekly bonus (USD)<input id="weekly-bonus" type="number" min="0" step="0.01" placeholder="0.00"></label><label class="tax-free-toggle"><input id="weekly-tax-free" type="checkbox">Tax-free week</label></div>
+          <div class="table-wrap"><table class="breakdown-table"><thead><tr><th>PROJECT</th><th>HOURLY (USD)</th><th>BONUS (USD)</th><th>OTHERS (USD)</th><th class="right">PROJECTED (USD)</th></tr></thead><tbody id="weekly-project-totals"></tbody></table></div>
+        </section>
+        <section class="panel tasks-panel"><div class="section-heading"><div><h2>Tasks this week</h2><p>Grouped by submission date and project rate.</p></div><button class="text-button" id="view-all">All weeks →</button></div><div id="weekly-task-list"></div></section>
+        <footer class="page-footer">Task rates, bonuses and projections are in USD. Actual amounts earned are recorded in EUR.</footer>
+      </section>
+
+      <section class="page hidden" id="tasks-view">
+        <div class="page-heading"><div><div class="eyebrow">YOUR WORK, WEEK BY WEEK</div><h1>Task log</h1><p class="subhead">Every task, grouped by its submission week.</p></div><button class="primary-button" id="add-task-list"><span>＋</span> Add task</button></div>
+        <div id="all-week-groups"></div>
+      </section>
+
+      <section class="page hidden" id="monthly-view">
+        <div class="page-heading"><div><div class="eyebrow">YOUR EARNINGS, MONTH BY MONTH</div><h1>Monthly earnings</h1><p class="subhead">Net actual earnings, taxes and gross amounts in EUR.</p></div></div>
+        <div class="monthly-grid" id="monthly-list"></div>
+      </section>
+
+      <section class="page hidden" id="projects-view">
+        <div class="page-heading"><div><div class="eyebrow">SET UP YOUR RATES</div><h1>Projects & settings</h1><p class="subhead">Project rates fill in new tasks. Saved tasks keep their own hourly rate.</p></div></div>
+        <section class="panel settings-panel">
+          <div class="section-heading"><div><h2>Projects</h2></div></div>
+          <form class="project-create" id="project-form"><label>Project name<input id="project-name" required maxlength="60" placeholder="e.g. Code Behaviors"></label><label>Hourly rate (USD)<input id="project-rate" required type="number" min="0" step="0.01" placeholder="0.00"></label><label class="project-create-toggle"><input id="project-track-worked" type="checkbox">Track worked hours separately</label><button class="primary-button" type="submit">＋ Add project</button></form>
+          <div id="project-list" class="project-list"></div>
+        </section>
+        <section class="panel settings-panel tax-settings">
+          <div class="section-heading"><div><h2>Monthly taxes</h2><p>Each tax applies to the month’s non-exempt gross earnings in EUR. A roof caps that tax’s monthly base; weekly earnings count in the month of their payroll Friday, the Friday after the period ends.</p></div></div>
+          <form class="tax-create" id="tax-form"><label>Tax name<input id="tax-name" required maxlength="60" placeholder="e.g. Income tax"></label><label>Percentage<input id="tax-percentage" required type="number" min="0" max="100" step="0.01" placeholder="25"></label><label>Monthly roof (EUR)<input id="tax-roof" type="number" min="0" step="0.01" placeholder="Leave blank for no roof"></label><button class="primary-button" type="submit">＋ Add tax</button></form>
+          <div id="tax-list" class="tax-list"></div>
+        </section>
+        <section class="panel settings-panel global-settings"><div class="section-heading"><div><h2>Week settings</h2><p>Task rates and projected totals are in USD; actual earnings are in EUR.</p></div></div><div class="global-fields"><label>Week starts on<select id="week-start"><option value="1">Monday</option><option value="0">Sunday</option><option value="6">Saturday</option></select></label></div></section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="task-modal"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><div class="eyebrow">TASK DETAILS</div><h2 id="modal-title">Add a task</h2></div><button class="close-button" id="close-modal" aria-label="Close">×</button></div>
+    <form id="task-form">
+      <input type="hidden" id="edit-id">
+      <label>Project<select id="task-project" required><option value="">Choose a project</option></select></label>
+      <label>Task name<input id="task-name" required maxlength="100" placeholder="What did you work on?"></label>
+      <div class="form-grid">
+        <label>Hourly rate (USD)<input id="task-rate" type="number" required min="0" step="any"></label>
+        <label>Submission date<input id="task-date" type="date" required></label>
+      </div>
+      <div class="form-grid">
+        <label>Hours billed<input id="task-hours" type="number" required min="0" step="0.01" placeholder="0.00"></label>
+        <label class="conditional-field hidden" id="worked-hours-field">Hours worked<input id="task-hours-worked" type="number" min="0" step="0.01" placeholder="0.00"></label>
+      </div>
+      <div class="form-grid">
+        <label>Bonus amount (USD)<input id="task-bonus" type="number" min="0" step="0.01" placeholder="0.00"></label>
+        <label>Others amount (USD)<input id="task-others" type="number" min="0" step="0.01" placeholder="0.00"></label>
+      </div>
+      <div class="estimate-box"><span>Projected task total (USD)</span><strong id="task-estimate">$0.00</strong><small id="estimate-detail">Hours billed × hourly rate + bonus + others (USD)</small></div>
+      <div class="modal-actions"><button type="button" class="danger-button hidden" id="delete-task">Delete task</button><button type="button" class="secondary-button" id="cancel-modal">Cancel</button><button type="submit" class="primary-button">Save task</button></div>
+    </form>
+  </section></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

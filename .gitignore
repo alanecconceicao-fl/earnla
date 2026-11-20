@@ -1,0 +1,6 @@
+earnings.sqlite
+earnings.sqlite-shm
+earnings.sqlite-wal
+.DS_Store
+earnla-backup-*.json
+earnwell-backup-*.json
